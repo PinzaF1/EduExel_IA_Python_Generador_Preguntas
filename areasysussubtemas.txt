@@ -24,6 +24,7 @@ Inglés
 -Subject/Object pronouns & Possessive adjectives
 
 Lenguaje
+
 -Comprensión lectora (sentido global y local)
 -Conectores lógicos (causa, contraste, condición, secuencia)
 -Identificación de argumentos y contraargumentos
@@ -38,6 +39,7 @@ Matemáticas
 -Ecuaciones lineales y sistemas 2×2
 
 estilo_kolb
+
 -Convergente
 -Asimilador
 -Divergente
