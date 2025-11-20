@@ -8,7 +8,8 @@
 # - Generación de packs: hasta 100 preguntas (máximo)
 # - MODO RÍGIDO: Validaciones estrictas, sin fallbacks, sin tolerancia a errores
 # - Compatible con: gpt-4o, gpt-5-pro, o1-preview, y otros modelos OpenAI
-# - Endpoints: /icfes/catalogo, /icfes/validar, /icfes/generar, /icfes/generar_pack, /debug/raw
+# - Endpoints: /icfes/catalogo, /icfes/validar, /icfes/generar, /icfes/generar_pack, /debug/raw,
+#              /icfes/doc_justificacion
 # ------------------------------------------------------------
 
 from fastapi import FastAPI, Query
@@ -24,6 +25,175 @@ import random
 import unicodedata
 import time
 
+# ===================== Documentación oficial ICFES (bloque para Confluence) =====================
+
+ICFES_DOC_CONFLUENCE = """
+# Documentación sobre el uso de información oficial del ICFES para la generación automática de preguntas tipo Saber 11 con IA
+
+## 1. Objetivo del documento
+
+El propósito de este documento es justificar el uso de la documentación oficial del ICFES sobre el examen Saber 11 en un sistema de generación automática de preguntas mediante Inteligencia Artificial. Además, se explica para qué se emplea dicha documentación dentro del flujo de trabajo del sistema, de modo que cualquier persona que revise el proyecto entienda que las preguntas generadas no son arbitrarias, sino que siguen los lineamientos formales del examen de Estado.
+
+---
+
+## 2. Contexto: examen Saber 11 y documentación oficial
+
+El Examen de Estado de la Educación Media, Saber 11, es una prueba estandarizada que mide la calidad de la educación impartida a los estudiantes que culminan la educación media. Está compuesto por cinco pruebas:
+
+* Lectura Crítica
+* Matemáticas
+* Ciencias Naturales
+* Sociales y Ciudadanas
+* Inglés
+
+El ICFES publica para cada una de estas pruebas documentos e infografías oficiales donde se describen:
+
+* Las competencias que se evalúan
+* Los componentes o ejes temáticos principales
+* El tipo de textos, problemas o situaciones que se utilizan
+* La forma general de las preguntas y del cuadernillo
+
+Esta información es la base para que cualquier instrumento de evaluación que pretenda asemejarse al Saber 11 mantenga coherencia con el examen real.
+
+---
+
+## 3. Por qué usamos la documentación oficial del ICFES
+
+### 3.1 Alineación con los estándares de evaluación del país
+
+La documentación oficial asegura que las preguntas generadas por la IA estén alineadas con los estándares establecidos por el ICFES. El examen Saber 11 es un referente nacional, por lo que sus especificaciones definen qué se considera una competencia básica en lectura, matemáticas, ciencias, sociales y lengua extranjera.
+
+Incorporar esta información garantiza que:
+
+* Se respete la manera en que el ICFES entiende cada competencia
+* Las preguntas apunten a los mismos objetivos del examen real
+* Los resultados obtenidos con el sistema sean comparables en enfoque con los del Saber 11
+
+---
+
+### 3.2 Rigor conceptual y disciplinar
+
+Cada prueba se define en términos de competencias, procesos cognitivos y componentes temáticos. La IA requiere estas definiciones para generar preguntas válidas, evitando ejercicios superficiales o descontextualizados.
+
+El uso de documentación oficial permite:
+
+* Diferenciar entre ejercicios de memoria y ejercicios que realmente evalúan análisis y comprensión
+* Mantener el vocabulario técnico adecuado
+* Adaptarse al nivel esperado para estudiantes de grado 11
+
+---
+
+### 3.3 Coherencia en la estructura de las preguntas
+
+El formato del Saber 11 utiliza preguntas de opción múltiple con distractores funcionales. Para replicar este estilo, la IA debe conocer:
+
+* La forma del enunciado
+* Los tipos de distractores que usa el examen
+* El tipo de textos, problemas o gráficos que se incluyen
+
+El uso de la documentación oficial previene:
+
+* Preguntas ambiguas
+* Opciones poco realistas
+* Ítems que no coinciden con la lógica del examen
+
+---
+
+### 3.4 Control de dificultad y nivel cognitivo
+
+Las pruebas Saber 11 evalúan comprender, aplicar, analizar y evaluar. La documentación del ICFES describe lo que se espera de cada nivel cognitivo.
+
+A partir de esto, la IA puede:
+
+* Ajustar la dificultad según la competencia
+* Generar preguntas sencillas, intermedias y complejas
+* Crear problemas que exigen razonamiento, no solo memoria
+
+---
+
+### 3.5 Calidad, confiabilidad y trazabilidad
+
+Utilizar fuentes oficiales permite rastrear cada pregunta hasta su fundamento conceptual. Esto facilita:
+
+* Auditar el banco de preguntas
+* Verificar que cada ítem se ajusta a su competencia correspondiente
+* Realizar mejoras o actualizaciones basadas en cambios del ICFES
+
+---
+
+## 4. Para qué usamos la documentación del ICFES en la IA
+
+### 4.1 Definir plantillas y parámetros de generación
+
+La IA utiliza la documentación oficial para estructurar correctamente:
+
+* Competencias por prueba
+* Componentes temáticos
+* Tipos de textos o problemas
+* Formatos válidos de enunciado
+
+La IA no genera preguntas sin guía; se basa en estas plantillas formales.
+
+---
+
+### 4.2 Etiquetar cada pregunta con información pedagógica
+
+Cada pregunta generada queda clasificada según:
+
+* Área
+* Competencia
+* Componente
+* Tipo de texto o situación
+
+Esto permite filtrar, organizar o seleccionar preguntas según necesidades pedagógicas, utilizando el lenguaje oficial del ICFES.
+
+---
+
+### 4.3 Generar explicaciones coherentes de respuesta
+
+La documentación oficial también se usa para generar explicaciones precisas. La IA explica cada respuesta basándose en:
+
+* La competencia evaluada
+* El proceso cognitivo
+* El distractor que representa un error típico
+
+Esto brinda retroalimentación útil y alineada con los lineamientos del examen.
+
+---
+
+### 4.4 Entrenar y ajustar modelos de IA
+
+Las especificaciones del ICFES sirven como referencia para evaluar si el modelo está produciendo preguntas válidas. Gracias a esto es posible:
+
+* Detectar desviaciones del modelo
+* Ajustar la frecuencia de competencias
+* Corregir sesgos o formulaciones incorrectas
+
+---
+
+### 4.5 Comunicación clara con docentes, estudiantes y directivos
+
+Indicar que el sistema utiliza documentación oficial del ICFES transmite confianza y claridad sobre el propósito del generador:
+
+* No reemplaza al examen real
+* Está diseñado para práctica y preparación
+* Usa terminología oficial y estructura alineada con el Saber 11
+
+---
+
+## 5. Conclusión
+
+La utilización de documentación oficial del ICFES es fundamental para la generación automática de preguntas tipo Saber 11 mediante IA.
+
+Gracias a estas fuentes:
+
+* Las preguntas generadas respetan competencias, componentes y niveles cognitivos
+* El banco de preguntas resulta confiable y coherente
+* Se garantiza que el diseño de evaluaciones se mantenga alineado con estándares nacionales
+
+El uso de estas especificaciones permite que el sistema sea riguroso, trazable, educativo y técnicamente sólido.
+"""
+
 # ===================== Configuración =====================
 load_dotenv(find_dotenv(), override=True)
 
@@ -33,8 +203,6 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 STRICT_MODE = True  # Siempre en modo estricto - más rígido
 DEBUG_JSON = os.getenv("DEBUG_JSON", "0") == "1"
 SEED_RANDOMIZE = os.getenv("SEED_RANDOMIZE", "1") == "1"
-
-
 
 # Validación estricta de API Key
 if not OPENAI_API_KEY or not OPENAI_API_KEY.strip():
@@ -56,7 +224,11 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 app = FastAPI(
     title="EduExcel - Generador de Preguntas ICFES (Modo Rígido)",
-    description="API para generar preguntas tipo ICFES con estilos de aprendizaje de Kolb. Modo rígido con validaciones estrictas.",
+    description=(
+        "API para generar preguntas tipo ICFES con estilos de aprendizaje de Kolb. "
+        "Modo rígido con validaciones estrictas. Las preguntas se alinean con la documentación oficial "
+        "del examen Saber 11 del ICFES (competencias, componentes y niveles cognitivos)."
+    ),
     version="2.0.0-rigido"
 )
 
@@ -370,8 +542,8 @@ def parse_json_min(text: str) -> dict:
     if "```" in s:
         s = re.sub(r"```\s*", "", s)
     
-    # Normalizar comillas
-    s = s.replace(""", '"').replace(""", '"').replace("'", "'").replace("'", "'")
+    # Normalizar comillas (nota: este bloque asume caracteres estándar en la práctica)
+    s = s.replace("“", '"').replace("”", '"')
     s = s.strip()
     
     # Validación estricta: debe empezar y terminar con llaves
@@ -615,7 +787,9 @@ def fix_explanation_coherence(explicacion: str, correcta: str, area: str) -> str
 def system_prompt(area: str = None) -> str:
     """Genera el prompt del sistema según el área."""
     base = (
-        "Eres un generador experto de ÍTEMS tipo ICFES. "
+        "Eres un generador experto de ÍTEMS tipo ICFES para el examen Saber 11. "
+        "Todas las preguntas deben estar alineadas con la documentación oficial del ICFES: "
+        "competencias, componentes temáticos y niveles cognitivos (comprender, aplicar, analizar, evaluar). "
         "DEVUELVES EXCLUSIVAMENTE JSON VÁLIDO (sin Markdown ni texto fuera del JSON). "
         "Esquema por ítem: {\"area\":\"\",\"subtema\":\"\",\"estilo_kolb\":\"\",\"pregunta\":\"\","
         "\"opciones\":{\"A\":\"\",\"B\":\"\",\"C\":\"\",\"D\":\"\"},\"respuesta_correcta\":\"\",\"explicacion\":\"\",\"meta\":{}} "
@@ -662,8 +836,9 @@ def user_prompt(cfg):
         f"Genera UNA pregunta del área {cfg.area}, subtema EXACTO {cfg.subtema}. "
         f"Estilo Kolb: {estilo}. "
         f"Usa este enfoque: {guide}{sociales_note}{mates_note}{ingles_note} "
+        "Alinea la competencia, el componente temático y el nivel cognitivo con las especificaciones oficiales del examen Saber 11 del ICFES. "
         f"IMPORTANTE: La pregunta debe tener entre {cfg.longitud_min} y {cfg.longitud_max} palabras (longitud típica de ICFES). "
-        f"Texto extenso con contexto completo; evita preguntas cortas o de una sola frase. "
+        "Texto extenso con contexto completo; evita preguntas cortas o de una sola frase. "
         f"LONG_MIN {cfg.longitud_min} palabras, LONG_MAX {cfg.longitud_max} palabras. "
         "Devuelve SOLO el JSON del esquema indicado; sin texto adicional. "
         "Varía números, nombres y contexto; evita repetir patrones."
@@ -710,7 +885,7 @@ def chat_openai(messages: List[dict], max_tokens: int, temperature: float) -> Tu
         if OPENAI_MODEL not in ["o1-preview", "o1-mini", "o3-mini"]:
             kwargs["response_format"] = {"type": "json_object"}
         
-        # Seed solo para modelos que lo soportan
+        # Seed solo para modelos que lo soportan (si no randomizamos)
         if OPENAI_MODEL not in ["o1-preview", "o1-mini", "o3-mini"] and not SEED_RANDOMIZE:
             kwargs["seed"] = seed_val
         
@@ -901,7 +1076,8 @@ def root():
             "validar": "/icfes/validar",
             "generar": "/icfes/generar",
             "generar_pack": "/icfes/generar_pack",
-            "debug": "/debug/raw"
+            "debug": "/debug/raw",
+            "doc_justificacion": "/icfes/doc_justificacion"
         }
     }
 
@@ -909,6 +1085,19 @@ def root():
 def icfes_catalogo():
     """Lista las 5 áreas, sus subtemas y estilos Kolb con descripciones."""
     return {"ok": True, "catalogo": catalogo()}
+
+@app.get("/icfes/doc_justificacion")
+def icfes_doc_justificacion():
+    """
+    Devuelve la documentación interna (en formato Markdown/Confluence)
+    que justifica el uso de la información oficial del ICFES para la
+    generación automática de preguntas tipo Saber 11 con IA.
+    """
+    return {
+        "ok": True,
+        "formato": "markdown_confluence",
+        "documentacion": ICFES_DOC_CONFLUENCE,
+    }
 
 @app.post("/icfes/validar")
 def icfes_validar(cfg: GenInput):
